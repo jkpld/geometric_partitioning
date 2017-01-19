@@ -1,10 +1,10 @@
-function [BW,cuts,Info] = declumpNuclei(Is,CC,options,attemptDeclumping)
+function [BW,cuts,Info] = declumpNuclei(I,BW,options)
 % DECLUMPNUCLEI Declump the nuclei in an image
 %
 % [BW,cuts,Info] = declumpNuclei(I,BW,options)
 %
-% I - smoothed input image
-% CC - bwconncomp structure
+% I - input image
+% BW - object mask for image
 % options - declumpOptions class object
 %
 % BW - object mask after partitioning clumps
@@ -14,54 +14,26 @@ function [BW,cuts,Info] = declumpNuclei(Is,CC,options,attemptDeclumping)
 
 % James Kapaldo
 
-if nargin<4
-    attemptDeclumping = true(CC.NumObjects,1);
-end
-    
-
 % Get number of rows in image
-numImRows = size(Is,1);
+numImRows = size(I,1);
 
 % Smooth the image
-% Is = imfilter(I,fspecial('gaussian',7,1));
+Is = imfilter(I,fspecial('gaussian',7,1));
 
 % Get image edges
 S = getImageEdges(Is,options.Use_GPU);
 
 % Remove small holes from mask
-% BW = ~bwareaopen(~BW,options.Minimum_Hole_Size,4);
+BW = ~bwareaopen(~BW,options.Minimum_Hole_Size,4);
 
 % Get connected commponents
-% CC = bwconncomp(BW);
+CC = bwconncomp(BW);
 pixelList = CC.PixelIdxList;
 
 % Create sliced cell arrays with image edges, and 1/image intensities
 Is = double(Is);
 S = cellfun(@(x) S(x), pixelList,'UniformOutput',false);
 Iunder1 = cellfun(@(x) mean(Is(x))./Is(x), pixelList,'UniformOutput',false);
-
-% Create binary mask from CC structure.
-BW = labelmatrix(CC)>0;
-
-
-% if ~isempty(median_a)
-%     % Measure the area and the mean dapi intensity
-%     I = cellfun(@(x) Is(x), pixelList,'UniformOutput',false);
-%     features = zeros(CC.NumObjects,4);
-% 
-%     parfor i = 1:CC.NumObjects
-%         j = rem(pixelList{i}-1, numImRows) + 1 + offset(2); %#ok<PFBNS>
-%         k = (pixelList{i} - j)/numImRows + 1 + offset(1);
-%         features(i,:) = [mean(k), mean(j), numel(pixelList{i}), mean(I{i})]
-%     end
-%     features(:,1:2) = features(:,1:2)*mmPerPixel;
-%     % Normalize the area and dapi integrated intensity
-%     features(:,3) = features(:,3) ./ median_a(features(:,1),features(:,2));
-%     features(:,4) = features(:,4).*features(:,3) ./ median_dapi(features(:,1),features(:,2));
-%     attemptDeclumping = attemptDeclumping_fun(features(:,3),features(:,4));
-% else
-%     attemptDeclumping = true(CC.NumObjects,1);
-% end
 
 % Compute boundary information
 [B,N,K,M] = computeBoundaryInformation(BW,options);
@@ -76,8 +48,6 @@ if ~isempty(options.Object_Of_Interest)
     pixelList = pixelList(options.Object_Of_Interest);
     S = S(options.Object_Of_Interest);
     Iunder1 = Iunder1(options.Object_Of_Interest);
-    attemptDeclumping = attemptDeclumping(options.Object_Of_Interest);
-    
     options.Use_Parallel = false;
 end
 
@@ -104,23 +74,21 @@ if options.Use_Parallel
     
     parfor obj = 1:numel(B)
     
-        if attemptDeclumping(obj)
+        [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},pixelList{obj},numImRows,options,produceDebugPlot);
+
+        if ~isempty(Info{obj}.error)
+            % If there was an error, try again as most error occure
+            % because the centers were in just the wrong position and
+            % they will not be again.
             [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},pixelList{obj},numImRows,options,produceDebugPlot);
 
             if ~isempty(Info{obj}.error)
-                % If there was an error, try again as most error occure
-                % because the centers were in just the wrong position and
-                % they will not be again.
-                [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},pixelList{obj},numImRows,options,produceDebugPlot);
-
-                if ~isempty(Info{obj}.error)
-                    fprintf('\nWarning! There was an error in object %d. Full error report stored in Info{%d}.error\n', obj, obj)
-                    fprintf(2,'%s\n', getReport(Info{obj}.error,'basic'))
-                    fprintf('\n')
-                end
-            end
-        end
-    end
+                fprintf('\nWarning! There was an error in object %d. Full error report stored in Info{%d}.error\n', obj, obj)
+                fprintf(2,'%s\n', getReport(Info{obj}.error,'basic'))
+                fprintf('\n')
+            end % if
+        end % if
+    end % parfor
 else
     
     generateDisplayAt = unique(round(linspace(1,numel(B),7)));
@@ -129,30 +97,27 @@ else
     for obj = 1:numel(B)
         procTime = tic;
         
-        if attemptDeclumping(obj)
+        [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},pixelList{obj},numImRows,options,produceDebugPlot);
+
+        if ~isempty(Info{obj}.error)
+            % If there was an error, try again as most error occure
+            % because the centers were in just the wrong position and
+            % they will not be again.
             [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},pixelList{obj},numImRows,options,produceDebugPlot);
 
             if ~isempty(Info{obj}.error)
-                % If there was an error, try again as most error occure
-                % because the centers were in just the wrong position and
-                % they will not be again.
-                [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},pixelList{obj},numImRows,options,produceDebugPlot);
-
-                if ~isempty(Info{obj}.error)
-                    fprintf('\nWarning! There was an error in object %d. Full error report stored in Info{%d}.error\n', obj, obj)
-                    fprintf(2,'%s\n', getReport(Info{obj}.error,'basic'))
-                    fprintf('\n')
-                end
-            end
-        end
+                fprintf('\nWarning! There was an error in object %d. Full error report stored in Info{%d}.error\n', obj, obj)
+                fprintf(2,'%s\n', getReport(Info{obj}.error,'basic'))
+                fprintf('\n')
+            end % if
+        end % if
         
         processTimes(obj) = toc(procTime);
         if any(obj == generateDisplayAt)
             fprintf('%s >> %d/%d (%0.2f/%0.2f)...\n',datestr(now,31),obj,numel(B),sum(processTimes(1:obj))/60,mean(processTimes(1:obj))*numel(B)/60)
-        end
-    end
-    
-end
+        end % if
+    end % for
+end % if
 
 if options.Use_GPU
     resetGPU
@@ -181,8 +146,9 @@ end
 function [cutPixList, cuts, Info] = declumpObject__(B,N,K,M,S,I,pixList,numImRows,options,produceDebugPlot)
 
 
+% Note
 % Put the whole thing in a try-catch statement. As the particle positions
-% can be in different places everysingle time, sometimes there are errors
+% can be in different places every single time, sometimes there are errors
 % in the partitioning that have never been seen before (and thus not
 % fixed). If there is an error in an object, then cutPixList and cuts will
 % be empty. Info will have a field named 'error' that contains the error
@@ -494,3 +460,4 @@ box on
 axis tight
 daspect([1 1 1])
 end
+
