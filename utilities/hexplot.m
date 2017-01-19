@@ -152,14 +152,14 @@ end
 if isempty(colorData)
     p = patch('Vertices',hexVerts,'Faces',hexFaces,'FaceColor','k','EdgeColor','none','Parent',parent);
 else
-    p = patch('Vertices',hexVerts,'Faces',hexFaces,'FaceColor','flat','EdgeColor','none','Parent',parent);
+    p = patch('Vertices',hexVerts,'Faces',hexFaces,'FaceColor','flat','EdgeColor','flat','Parent',parent);
     switch colorScale
         case 'linear'
             n = colorData;
         case 'log'
             n = max(log(colorData),0);
     end
-    p.FaceVertexCData = n;
+    p.FaceVertexCData = kron(n,ones(6,1));
 end
 
 if nargout > 0

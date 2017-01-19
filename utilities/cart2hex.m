@@ -4,6 +4,8 @@ function [hx,hy] = cart2hex(cp,a,b)
 % Output will be an array of the same size as cp with the hexagonal centers
 % of each point. Hexagon center 0,0 is at cartesian point 0,0.
 %
+% [hx,hy] = cart2hex(cp,a,b)
+%
 % See also HEX2CART, HEXPLOT
 
 % Ref: 

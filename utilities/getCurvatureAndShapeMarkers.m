@@ -123,6 +123,7 @@ if ~isempty(shiftInd)
     end
     
     R_s = 1./kappa_s;
+%     R_s = 1./kappa; % This is for not using the convex hull transformed markers.
     shapeMarkersXY = bndry + bsxfun(@times, n,R_s);
 
     % -----------

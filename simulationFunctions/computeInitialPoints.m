@@ -118,7 +118,10 @@ imSize = size(BW);
 % Get eroded image to compare against curvature centers.
 % Pad mask with zeros so that erode will work from all side.
 BW_e = padarray(BW,[1 1],0);
-BW_e = imerode(BW_e,strel('disk',3));
+
+se = ones(5); % this is the same as strel('disk',3)
+BW_e = imerode(BW_e,se);
+
 
 % Remove padding.
 BW_e(:,[1,end]) = [];

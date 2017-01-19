@@ -5,6 +5,8 @@ function [cpx,cpy] = hex2cart(hx,a,b)
 % coordiantes of each hexagon center. Hexagon center 0,0 is at cartesian
 % point 0,0.
 %
+% [cpx,cpy] = hex2cart(hx,a,b)
+%
 % See also CART2HEX, HEXPLOT
 
 % Ref: 

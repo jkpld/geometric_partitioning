@@ -34,7 +34,7 @@ THRESH = [params.LOWER_EDGE_THRESHOLD_PERCENT, params.UPPER_EDGE_THRESHOLD_PERCE
 S = single(I);
 
 S = imfilter(S,fspecial('gaussian',7,1),'symmetric');
-S = imreconstruct(gpuArray(imerode(S,strel('disk',EROSION_SIZE))),S,4);
+S = imreconstruct(imerode(S,strel('disk',EROSION_SIZE)),S,4);
 S = imopen(S,strel('disk',5));
 
 H = fspecial('gaussian',21,3);
@@ -56,6 +56,7 @@ S = imfilter(S,fspecial('gaussian',7,1),'symmetric');
 S = S.*single(BW);
 S(~isfinite(S)) = 0;
 S = imfill(S);
+
 S = (1./S);
 S(~BW) = 1;
 

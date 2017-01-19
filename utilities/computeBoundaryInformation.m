@@ -67,14 +67,14 @@ function [B,n,curvature,curvatureCenters] = computeBoundaryInformation(BW,option
 %              declumpOptions)
 
 
-USE_PARALLEL = options.Use_Parallel;
+% USE_PARALLEL = options.Use_Parallel;
 KAPPA_SMOOTHING_SIGMA = options.Curvature_Smoothing_Size;
 MAX_RADIUS = options.Max_Radius;
 
-if USE_PARALLEL
-    [B,n,curvature,curvatureCenters] = computeBoundaryInformation__parallel(BW,KAPPA_SMOOTHING_SIGMA,MAX_RADIUS);
-    return;
-end
+% if USE_PARALLEL
+%     [B,n,curvature,curvatureCenters] = computeBoundaryInformation__parallel(BW,KAPPA_SMOOTHING_SIGMA,MAX_RADIUS);
+%     return;
+% end
 
 useConvexHull = true;
 

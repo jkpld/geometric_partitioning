@@ -1,4 +1,4 @@
-function [BW,cuts,Info] = declumpNuclei(I,BW,options)
+function [BW,cuts,Info,intraSS] = declumpNuclei(I,BW,options)
 % DECLUMPNUCLEI Declump the nuclei in an image
 %
 % [BW,cuts,Info] = declumpNuclei(I,BW,options)
@@ -14,6 +14,10 @@ function [BW,cuts,Info] = declumpNuclei(I,BW,options)
 
 % James Kapaldo
 
+% if options.Use_GPU
+%     dev = gpuDevice();
+% end
+
 % Get number of rows in image
 numImRows = size(I,1);
 
@@ -28,16 +32,22 @@ BW = ~bwareaopen(~BW,options.Minimum_Hole_Size,4);
 
 % Get connected commponents
 CC = bwconncomp(BW);
-pixelList = CC.PixelIdxList;
 
 % Get intra object edges
-intraS = intraObjectEdges(Is,BW,CC,options);
+intraSS = intraObjectEdges(Is,BW,CC,options);
+
+% Remove small holes from mask
+BW = ~bwareaopen(~BW,options.Minimum_Hole_Size,4);
+
+% Get connected commponents
+CC = bwconncomp(BW);
+pixelList = CC.PixelIdxList;
 
 % Create sliced cell arrays with image edges, and 1/image intensities
 Is = double(Is);
 S = cellfun(@(x) S(x), pixelList,'UniformOutput',false);
 Iunder1 = cellfun(@(x) mean(Is(x))./Is(x), pixelList,'UniformOutput',false);
-intraS = cellfun(@(x) intraS(x), pixelList,'UniformOutput',false);
+intraS = cellfun(@(x) intraSS(x), pixelList,'UniformOutput',false);
 
 % Compute boundary information
 [B,N,K,M] = computeBoundaryInformation(BW,options);
@@ -142,7 +152,7 @@ end
 end
 
 function resetGPU
-    reset(gpuDevice());
+%     reset(dev);
     gpuDevice([]);
 end
 
@@ -325,6 +335,9 @@ end
 
 % Remove any cuts that are not at concave points.
 if ~isempty(objCuts) && any(~isTriCut)
+%     tmpK = objCutKs;
+%     tmpK(isnan(tmpK)) = inf;
+%     toRemove = ~all(tmpK < 1/options.Max_Radius,2);
     toRemove = (mean(objCutKs,2) < 1/(2*options.Max_Radius)) & ~isTriCut; % maybe use max instead of mean.
     objCuts(toRemove,:) = [];
 end
@@ -444,11 +457,11 @@ for group = 1:numel(TriInfo)
         plot(centers(triCent([2,3]),1),centers(triCent([2,3]),2),'Color',0.3*[1 1 1],'LineWidth',2);
     end
     
-    pM = plot(TriInfo(group).triangleCenterSearchPoints(:,1),TriInfo(group).triangleCenterSearchPoints(:,2),'ys','MarkerSize',4,'LineWidth',0.5);
+    pM = plot(TriInfo(group).triangleCenterSearchPoints(:,1)-Info.topLeft(:,1),TriInfo(group).triangleCenterSearchPoints(:,2)-Info.topLeft(:,2),'ys','MarkerSize',4,'LineWidth',0.5);
     for i = 1:size(TriInfo(group).originalCuts)
-        p1 = plot(TriInfo(group).originalCuts(i,[1,3]), TriInfo(group).originalCuts(i,[2,4]),'Color',0.5*[1 0 0],'LineWidth',2);
-        p2 = plot(TriInfo(group).vertexOptimizedCuts(i,[1,3]), TriInfo(group).vertexOptimizedCuts(i,[2,4]),'Color',0.5*[0 1 0],'LineWidth',2);
-        p3 = plot(TriInfo(group).optimizedCuts(i,[1,3]), TriInfo(group).optimizedCuts(i,[2,4]),'Color',0.5*[0 0 1],'LineWidth',2);
+        p1 = plot(TriInfo(group).originalCuts(i,[1,3])-Info.topLeft(:,1), TriInfo(group).originalCuts(i,[2,4])-Info.topLeft(:,2),'Color',0.5*[1 0 0],'LineWidth',2);
+        p2 = plot(TriInfo(group).vertexOptimizedCuts(i,[1,3])-Info.topLeft(:,1), TriInfo(group).vertexOptimizedCuts(i,[2,4])-Info.topLeft(:,2),'Color',0.5*[0 1 0],'LineWidth',2);
+        p3 = plot(TriInfo(group).optimizedCuts(i,[1,3])-Info.topLeft(:,1), TriInfo(group).optimizedCuts(i,[2,4])-Info.topLeft(:,2),'Color',0.5*[0 0 1],'LineWidth',2);
     end
     
     cutG = cut{group}(isnan(cutK{group}(:,1)),:);

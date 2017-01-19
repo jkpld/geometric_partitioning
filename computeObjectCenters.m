@@ -116,7 +116,7 @@ if debug
     Info.ComputeInitialPoints = ComputInitalPointsInfo;
     Info.r0 = r0;
 else
-    r0 = computeInitialPoints(POINT_SELECTION_METHOD,BW,B,V,Options);
+    r0 = computeInitialPoints(POINT_SELECTION_METHOD,BW,B,V(PAD_SIZE+1:end-PAD_SIZE,PAD_SIZE+1:end-PAD_SIZE),Options);
 end
 
 % Number of particles
