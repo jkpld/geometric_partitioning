@@ -22,7 +22,7 @@ for i1 = 1:numel(depths)
         for i3 = 1:numel(extents)
             r = centers(i2)/2:0.01:(extents(i3) + centers(i2));
             f = @(x) potentialParametersFun(x,[depths(i1),centers(i2),extents(i3)],r);
-            potentialParameters(i1,i2,i3,:) = fminsearch(f,[-depths(i1),centers(i2),(extents(i3)-centers(i2))/3],options);
+            potentialParameters(i1,i2,i3,:) = fminsearch(f,[-depths(i1),centers(i2),(extents(i3)-centers(i2))/3],options); % 
         end
     end
     fprintf('%d/%d...\n',i1,numel(depths))
@@ -31,7 +31,9 @@ end
 PotentialParameters.depth = depths;
 PotentialParameters.center = centers;
 PotentialParameters.extent = extents;
-PotentialParameters.parameters = potentialParameters;
+PotentialParameters.parameters = potentialParameters; %#ok<STRNU>
+
+% potParams = PotentialParameters.parameters;
 
 save(file,'-struct','PotentialParameters')
 
@@ -39,7 +41,7 @@ end
 
 function f = potentialParametersFun(x,y,r)
 
-Vint = 1./r - x(1)*exp(-(r-x(2)).^2/(2*x(3)^2));
+Vint = 1./(r+0.2) - x(1)*exp(-(r-x(2)).^2/(2*x(3)^2));
 
 [minV,minVind] = min(Vint);
 

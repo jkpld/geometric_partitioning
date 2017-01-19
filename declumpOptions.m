@@ -40,6 +40,10 @@ classdef declumpOptions
 %   increases with simulation time.
 %   [0, Inf) , [1/time^2]
 %
+% Charge_Normalization_Beta - The beta exponent for charge normalization
+%   based on number of particles.
+%   (-Inf, Inf), [unitless]
+%
 % Solver_Time_Range - Range over which the particles are simulated.
 %   [0, Inf) , [time]
 %
@@ -94,6 +98,7 @@ classdef declumpOptions
         Potential_Extent
         Initial_Speed                = 0.01;
         Particle_Damping_Rate        = 5e-4;
+        Charge_Normalization_Beta    = 1/3;
         Solver_Time_Range            = 0:10:1500;
         Point_Selection_Method       = 'curvatureUniformRandom';
         
@@ -312,6 +317,11 @@ classdef declumpOptions
         function obj = set.Particle_Damping_Rate(obj,value)
             validateattributes(value,{'double'},{'scalar','nonnegative','real','finite'})
             obj.Particle_Damping_Rate = value;
+        end
+        
+        function obj = set.Charge_Normalization_Beta(obj,value)
+            validateattributes(value,{'double'},{'scalar','real','finite'})
+            obj.Charge_Normalization_Beta = value;
         end
         
     end

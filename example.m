@@ -12,7 +12,7 @@ options = declumpOptions();
 options.Max_Radius = 35;
 options.Min_Angle = 0.5;
 
-options.Wigner_Seitz_Radius = 10;
+options.Wigner_Seitz_Radius = 20;
 options.Potential_Depth = -1;
 options.Potential_Minimum_Location = 2;
 options.Potential_Extent = 15;

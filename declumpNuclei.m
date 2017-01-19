@@ -30,10 +30,14 @@ BW = ~bwareaopen(~BW,options.Minimum_Hole_Size,4);
 CC = bwconncomp(BW);
 pixelList = CC.PixelIdxList;
 
+% Get intra object edges
+intraS = intraObjectEdges(Is,BW,CC,options);
+
 % Create sliced cell arrays with image edges, and 1/image intensities
 Is = double(Is);
 S = cellfun(@(x) S(x), pixelList,'UniformOutput',false);
 Iunder1 = cellfun(@(x) mean(Is(x))./Is(x), pixelList,'UniformOutput',false);
+intraS = cellfun(@(x) intraS(x), pixelList,'UniformOutput',false);
 
 % Compute boundary information
 [B,N,K,M] = computeBoundaryInformation(BW,options);
@@ -48,6 +52,7 @@ if ~isempty(options.Object_Of_Interest)
     pixelList = pixelList(options.Object_Of_Interest);
     S = S(options.Object_Of_Interest);
     Iunder1 = Iunder1(options.Object_Of_Interest);
+    intraS = intraS(options.Object_Of_Interest);
     options.Use_Parallel = false;
 end
 
@@ -74,13 +79,13 @@ if options.Use_Parallel
     
     parfor obj = 1:numel(B)
     
-        [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},pixelList{obj},numImRows,options,produceDebugPlot);
+        [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},intraS{obj},pixelList{obj},numImRows,options,produceDebugPlot);
 
         if ~isempty(Info{obj}.error)
             % If there was an error, try again as most error occure
             % because the centers were in just the wrong position and
             % they will not be again.
-            [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},pixelList{obj},numImRows,options,produceDebugPlot);
+            [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},intraS{obj},pixelList{obj},numImRows,options,produceDebugPlot);
 
             if ~isempty(Info{obj}.error)
                 fprintf('\nWarning! There was an error in object %d. Full error report stored in Info{%d}.error\n', obj, obj)
@@ -97,13 +102,13 @@ else
     for obj = 1:numel(B)
         procTime = tic;
         
-        [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},pixelList{obj},numImRows,options,produceDebugPlot);
+        [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},intraS{obj},pixelList{obj},numImRows,options,produceDebugPlot);
 
         if ~isempty(Info{obj}.error)
             % If there was an error, try again as most error occure
             % because the centers were in just the wrong position and
             % they will not be again.
-            [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},pixelList{obj},numImRows,options,produceDebugPlot);
+            [cutPixList{obj},cuts{obj},Info{obj}] = declumpObject__(B{obj},N{obj},K{obj},M{obj},S{obj},Iunder1{obj},intraS{obj},pixelList{obj},numImRows,options,produceDebugPlot);
 
             if ~isempty(Info{obj}.error)
                 fprintf('\nWarning! There was an error in object %d. Full error report stored in Info{%d}.error\n', obj, obj)
@@ -143,7 +148,7 @@ end
 
 
 
-function [cutPixList, cuts, Info] = declumpObject__(B,N,K,M,S,I,pixList,numImRows,options,produceDebugPlot)
+function [cutPixList, cuts, Info] = declumpObject__(B,N,K,M,S,I,intraS,pixList,numImRows,options,produceDebugPlot)
 
 
 % Note
@@ -174,7 +179,7 @@ current_centers = [];
 
 % Create three small images with the mask, the edges, and 1 over the image
 % intensity.
-[BW,S,I] = createObjectImages(pixList,S,I,numImRows);
+[BW,S,I,intraS] = createObjectImages(pixList,S,I,intraS,numImRows);
 
 % Area of object
 objArea = numel(pixList);
@@ -194,7 +199,7 @@ M = M - topLeftB;
 % Compute the centers of the object
 if options.Debug
     
-    [current_centers,Info] = computeObjectCenters(BW,B,M,options);
+    [current_centers,Info] = computeObjectCenters(BW,B,intraS,M,options);
     
     if isempty(current_centers)
         Info.r_end = [];
@@ -210,7 +215,7 @@ if options.Debug
     Info.error = [];
 else
     
-    current_centers = computeObjectCenters(BW,B,M,options);
+    current_centers = computeObjectCenters(BW,B,intraS,M,options);
     
 end
 
@@ -407,6 +412,9 @@ grid on
 box on
 axis tight
 daspect([1 1 1])
+drawnow;
+
+
 end
 
 
@@ -459,5 +467,7 @@ grid on
 box on
 axis tight
 daspect([1 1 1])
+drawnow;
+
 end
 

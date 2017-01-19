@@ -1,4 +1,4 @@
-function [r0,Info] = computeInitialPoints(method,BW,B,options)
+function [r0,Info] = computeInitialPoints(method,BW,B,V,options)
 % COMPUTEINITIALPOINTS  Generate a set of initial particle locations for
 % modeling.
 %
@@ -124,6 +124,8 @@ BW_e = imerode(BW_e,strel('disk',3));
 BW_e(:,[1,end]) = [];
 BW_e([1,end],:) = [];
 
+BW_e = BW_e & (V<1/3);
+
 % Initialize givenMethodFailed if Info is requested.
 if nargout > 1
     Info.givenMethodFailed = false;
@@ -158,6 +160,7 @@ if any(strcmp(method,{'curvatureRandom','curvatureUniformRandom'}))
     % Remove outside of the eroded mask.
     markers_lin = markers(:,1) + (markers(:,2)-1)*imSize(1);
     markers(~BW_e(markers_lin),:) = [];
+    
 end
 
 

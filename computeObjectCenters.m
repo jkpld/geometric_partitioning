@@ -1,4 +1,4 @@
-function [centers, varargout] = computeObjectCenters(BW,B,initialLocations,options)
+function [centers, varargout] = computeObjectCenters(BW,B,intraS,initialLocations,options)
 % COMPUTEOBJECTCENTERS  Compute object centers by particle simulation
 %
 % centers = computeObjectCenters(BW,B,markers,options)
@@ -51,6 +51,8 @@ POINT_SELECTION_METHOD  = options.Point_Selection_Method;
 PARTICLE_DAMPING_RATE   = options.Particle_Damping_Rate;
 SOLVER_TIME_RANGE       = options.Solver_Time_Range;
 
+CHARGE_NORMALIZATION_BETA = options.Charge_Normalization_Beta;
+
 % PARTICLE_DAMPING_RATE   = 5e-4;
 % SOLVER_TIME_RANGE       = 0:10:1500;
 PAD_SIZE                = 5;
@@ -65,44 +67,9 @@ maskSize = size(BW);
 % Pad mask with zeros so that we have a strong potential all around the
 % object.
 BW_pad = padarray(BW,PAD_SIZE*[1 1]);
+intraS = padarray(intraS,PAD_SIZE*[1 1],1);
 
 
-% Compute particle initial positions -------------------------------------
-
-% This is computed near the top of this function because if there is only 1
-% particle, then we will not run declumping on this object.
-
-% Particle locations
-Options.rs = WIGNER_SEITZ_RADIUS;
-Options.curvatureCenters = initialLocations;
-
-if debug
-    [r0,ComputInitalPointsInfo] = computeInitialPoints(POINT_SELECTION_METHOD,BW,B,Options);
-    Info.ComputeInitialPoints = ComputInitalPointsInfo;
-    Info.r0 = r0;
-else
-    r0 = computeInitialPoints(POINT_SELECTION_METHOD,BW,B,Options);
-end
-
-% Number of particles
-N = size(r0,1);
-
-% If the number of particles is 1, then do continue further to model.
-% Return with zero centers, this object does not need to be declumped.
-if N < 2 || ~isfinite(N)
-    centers = [];
-    if debug
-        Info.V = [];
-        Info.dVx = [];
-        Info.dVy = [];
-        Info.r_end = [];
-        Info.solverTime = nan;
-        Info.ode_solution = [];
-        Info.converged = 1;
-        varargout{1} = Info;
-    end
-    return;
-end
 
 % Compute confining potential --------------------------------------------
 
@@ -119,14 +86,61 @@ V_out = (bwdist(BW_pad)+1);
 V_out = V_out.^(V_out+1);
 V(~BW_pad) = V_out(~BW_pad);
 
+Vdist = V;
+V = V.*intraS;
+
 % Compute gradient of confining potential --------------------------------
 [dVx,dVy] = gradient(V); 
 
 if debug
+    Info.Vdist = Vdist(PAD_SIZE+1:end-PAD_SIZE,PAD_SIZE+1:end-PAD_SIZE);
     Info.V = V(PAD_SIZE+1:end-PAD_SIZE,PAD_SIZE+1:end-PAD_SIZE);
     Info.dVx = dVx(PAD_SIZE+1:end-PAD_SIZE,PAD_SIZE+1:end-PAD_SIZE);
     Info.dVy = dVy(PAD_SIZE+1:end-PAD_SIZE,PAD_SIZE+1:end-PAD_SIZE);
 end
+
+
+% Compute particle initial positions -------------------------------------
+
+% This is computed near the top of this function because if there is only 1
+% particle, then we will not run declumping on this object.
+
+% Particle locations
+Options.rs = WIGNER_SEITZ_RADIUS;
+Options.curvatureCenters = initialLocations;
+
+
+
+if debug
+    [r0,ComputInitalPointsInfo] = computeInitialPoints(POINT_SELECTION_METHOD,BW,B,V(PAD_SIZE+1:end-PAD_SIZE,PAD_SIZE+1:end-PAD_SIZE),Options);
+    Info.ComputeInitialPoints = ComputInitalPointsInfo;
+    Info.r0 = r0;
+else
+    r0 = computeInitialPoints(POINT_SELECTION_METHOD,BW,B,V,Options);
+end
+
+% Number of particles
+N = size(r0,1);
+
+% If the number of particles is 1, then do continue further to model.
+% Return with zero centers, this object does not need to be declumped.
+if N < 2 || ~isfinite(N)
+    centers = [];
+    if debug
+        Info.Vdist = [];
+        Info.V = [];
+        Info.dVx = [];
+        Info.dVy = [];
+        Info.r_end = [];
+        Info.solverTime = nan;
+        Info.ode_solution = [];
+        Info.converged = 1;
+        varargout{1} = Info;
+    end
+    return;
+end
+
+
 
 % Create interpolating functions for confining force and potential -------
 
@@ -157,7 +171,7 @@ switch InteractionOptions.type
         sig = InteractionOptions.params(3);
         
         % Vint  = @(D)  1./D - A * exp(-(D-mu).^2/(2*sig^2));
-        dVint = @(D) -1./D.^2 + (A*(D-mu)/(sig^2)) .* exp(-(D-mu).^2/(2*sig^2));
+        dVint = @(D) -1./(D+0.2).^2 + (A*(D-mu)/(sig^2)) .* exp(-(D-mu).^2/(2*sig^2));
 end
 
 % Initialize particles ---------------------------------------------------
@@ -170,7 +184,7 @@ v0 = rand(N,2);
 v0 = INITIAL_SPEED * v0 ./ sqrt(sum(v0.^2,2));
 
 % Particle charge and mass
-q = N^(-1/3);
+q = N^(-CHARGE_NORMALIZATION_BETA);
 m = 1;
 
 % Particle damping

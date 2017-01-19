@@ -1,4 +1,4 @@
-function [BW,S,I] = createObjectImages(pixelList,Slist,Ilist,numImRows)
+function [BW,S,I,iS] = createObjectImages(pixelList,Slist,Ilist,iSlist,numImRows)
 % CREATEOBJECTIMAGES  Create the mask, edge, and intensity image for the
 % object with pixels given by pixelList from an image with numImRows number
 % of rows.
@@ -22,6 +22,7 @@ maxR = max(r,[],1,'omitnan');
 BW = false(maxR);
 S = zeros(maxR);
 I = zeros(maxR);
+iS = zeros(maxR);
 
 % Get linear indices for small image
 inds = r(:,1) + (r(:,2)-1)*maxR(1);
@@ -35,6 +36,10 @@ end
 
 if ~isempty(Ilist)
     I(inds) = Ilist;
+end
+
+if ~isempty(iSlist)
+    iS(inds) = iSlist;
 end
 
 end
