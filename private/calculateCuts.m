@@ -73,7 +73,7 @@ counter = 1;
 
 % Rebiuld each partition and get the cuts.
 cols = {'r','b'};
-[B,n]
+
 for i = 1:N
 
     % Get the indices of the boundary assigned to the curernt center.

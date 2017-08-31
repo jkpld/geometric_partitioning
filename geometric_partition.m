@@ -115,7 +115,8 @@ if ~isempty(objCuts) && any(~isTriCut)
 %     tmpK = objCutKs;
 %     tmpK(isnan(tmpK)) = inf;
 %     toRemove = ~all(tmpK < 1/options.Max_Radius,2);
-    toRemove = (mean(objCutKs,2) < 1/(2*options.Max_Radius)) & ~isTriCut; % maybe use max instead of mean.
+%     toRemove = (mean(objCutKs,2) < 1/(2*options.Max_Radius)) & ~isTriCut; % maybe use max instead of mean.
+    toRemove = (max(objCutKs,[],2) < 1/(options.Max_Radius)) & ~isTriCut; % maybe use max instead of mean.
 %     toRemove = any(objCutKs < 1/(2*options.Max_Radius),2) & ~isTriCut;
     objCuts(toRemove,:) = [];
 end
