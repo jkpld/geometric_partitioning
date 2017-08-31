@@ -58,6 +58,7 @@ if N == 1
     cuts = [];
     dcuts = [];
     cutCntrs = [];
+    cutIndices = [];
     partitions{1} = B;
     Info = [];
     return;
@@ -72,6 +73,7 @@ counter = 1;
 
 % Rebiuld each partition and get the cuts.
 cols = {'r','b'};
+[B,n]
 for i = 1:N
 
     % Get the indices of the boundary assigned to the curernt center.
@@ -95,7 +97,7 @@ for i = 1:N
         % find(diff(~currentAssignment),1,'first')
 
         firstBreak = find(~currentAssignment,1,'first')-1;
-        
+
         partitionB = circshift(partitionB,-firstBreak,1);
         partitionN = circshift(partitionN,-firstBreak,1);
     end

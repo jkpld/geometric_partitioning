@@ -1,7 +1,7 @@
 function setup
 
 if verLessThan('matlab','9.1')
-    error('ceclumpNuclei:setup','The declumpNuclei code requires at least Matlab 2016b because implicit expansion is heavily used.')
+    error('geometricPartitioning:setup','The declumpNuclei code requires at least Matlab 2016b because implicit expansion is heavily used.')
 end
 
 fprintf('\nStarting setup...\n')
@@ -12,66 +12,70 @@ path = fileparts(fileLocation);
 fprintf('...found path\n')
 
 % Compile the needed C files into .mex files -----------------------------
+% Compile the needed C files into .mex files -----------------------------
+have_compiler = true;
 try 
-    mex('-setup','c')
-catch ME
-    fprintf(2,'Error! There is no supported C compiler installed. Please install a supported C compiler to continue.\n\n')
-    rethrow(ME)
-end
-
-try
-    if ~exist(fullfile(path,'utilities',['interp2mex.' mexext]),'file')
-        mex(fullfile(path,'utilities','interp2mex.c'),'-outdir',fullfile(path,'utilities'),'-silent')
-    end
-    fprintf('...compiled interp2mex.c\n')
-    if ~exist(fullfile(path,'utilities',['nakeinterp1.' mexext]),'file')
-        mex(fullfile(path,'utilities','nakeinterp1.c'),'-outdir',fullfile(path,'utilities'),'-silent')
-    end
-    fprintf('...compiled nakeinterp1.c\n')
-catch ME
+    evalc('mex(''-setup'',''c'')');
+catch % ME
+    have_compiler = false;
+    warning('geometricPartitioning:setup','There is no supported C compiler installed.\nThe code will still run; however, it could be slower for 2D data without the compiled mex functions.')
 %     rethrow(ME)
-    error('declumpNuclei:setup','There was an error compiling the required C functions ''interp2mex.c'' and ''nakeinterp1.c''. Make sure that the function ''mex'' is coorectly setup to compile C code.')
 end
 
-% Copy histcountsmex into the utilities folder ---------------------------
-folder = fullfile(path,'utilities');
+if have_compiler
+    try
+        if ~exist(fullfile(path,'private',['nakeinterp1.' mexext]),'file')
+            mex(fullfile(path,'private','nakeinterp1.c'),'-outdir',fullfile(path,'private'),'-silent')
+        end
+        fprintf('...Compiled nakeinterp1.c\n')
+    catch % ME
+    %     rethrow(ME)
+        warning('geometricPartitioning:setup','There was an error compiling the required C function ''nakeinterp1.c''. Make sure that the function ''mex'' is coorectly setup to compile C code.\nThe code will still run; however, it could be slower without the compiled mex functions.')
+    end
+end
+
+% Copy histcountsmex into the private folder ---------------------------
+folder = fullfile(path,'private');
 d = dir(folder);
 names = {d.name};
-if ~any(strncmp('DN_histcountsmex',names,16))
+if ~any(strncmp('geoPart_histcountsmex',names,16))
     folder = fullfile(matlabroot,'toolbox','matlab','datafun','private');
     d = dir(folder);
     names = {d.name};
     nameIdx = strncmp('histcountsmex',names,13);
 
     if ~any(nameIdx)
-        error('declumpNuclei:setup','File ''histcountsmex'' was not found in\n %s\nThis file is required. Try manually locating it; if found copy into the utilities folder and rename it to ''DN_histcountsmex.(extension)''.',folder)
+        error('geometricPartitioning:setup','File ''histcountsmex'' was not found in\n %s\nThis file is required. Try manually locating it; if found copy into the private folder and rename it to ''geoPart_histcountsmex.(extension)''.',folder)
     end
 
-    copyfile(fullfile(folder,names{nameIdx}),fullfile(path,'utilities',['DN_' names{nameIdx}]))
+    copyfile(fullfile(folder,names{nameIdx}),fullfile(path,'private',['geoPart_' names{nameIdx}]))
 end
 fprintf('...added histcountsmex\n')
 
-% Copy pdistmex into the utilities folder --------------------------------
-folder = fullfile(path,'utilities');
-d = dir(folder);
-names = {d.name};
-if ~any(strncmp('DN_pdistmex',names,11))
-    folder = fullfile(matlabroot,'toolbox','stats','stats','private');
-    d = dir(folder);
-    names = {d.name};
-    nameIdx = strncmp('pdistmex',names,8);
-
-    if ~any(nameIdx)
-        error('declumpNuclei:setup','File ''pdistmex'' was not found in\n %s\nThis file is required. Try manually locating it; if found copy into the utilities folder and rename it to ''DN_pdistmex.(extension)''.',folder)
-    end
-
-    copyfile(fullfile(folder,names{nameIdx}),fullfile(path,'utilities',['DN_' names{nameIdx}]))
-end
-fprintf('...added pdistmex\n')
+% Copy pdistmex into the private folder --------------------------------
+% folder = fullfile(path,'private');
+% d = dir(folder);
+% names = {d.name};
+% if ~any(strncmp('geoPart_pdistmex',names,11))
+%     folder = fullfile(matlabroot,'toolbox','stats','stats','private');
+%     d = dir(folder);
+%     names = {d.name};
+%     nameIdx = strncmp('pdistmex',names,8);
+% 
+%     if ~any(nameIdx)
+%         error('declumpNuclei:setup','File ''pdistmex'' was not found in\n %s\nThis file is required. Try manually locating it; if found copy into the private folder and rename it to ''geoPart_pdistmex.(extension)''.',folder)
+%     end
+% 
+%     copyfile(fullfile(folder,names{nameIdx}),fullfile(path,'private',['geoPart_' names{nameIdx}]))
+% end
+% fprintf('...added pdistmex\n')
 
 % Add subfolders of current location to path -----------------------------
-addpath(genpath(path));
-fprintf('...added subfolders to path\n')
+pths = split(string(genpath(path)),';');
+toIgnore = {'.git','docs','unused'};
+pths = pths(~pths.contains(toIgnore)).join(';');
+addpath(pths.char());
+fprintf('...Added subfolders to path\n')
 
 fprintf('Setup finished!\n')
     

@@ -121,9 +121,9 @@ for groupNum = 1:numel(triangleGroups)
     % Get the edges for each triangle. 
     % * Form the edges (the 2 connected centers) along the 3rd dimension.
     %    ->   cat(3, triGroup, circshift(triGroup,1,1)) 
-    %         size : 3xQx2, where N is the number of triangles in the
+    %         size : 3xQx2, where Q is the number of triangles in the
     %         group
-    % * Permute the array to have size 2x3xN
+    % * Permute the array to have size 2x3xQ
     % * Reshape to have size 2x3*Q
     % * sort so that the smalled edge center is first
     % * Transpose to give final array with size 3*Q x 2, where each row
@@ -164,10 +164,10 @@ for groupNum = 1:numel(triangleGroups)
     %
     % Iterate over each triangle in the group.
     % * Create new potential cuts from the center of the triangle through
-    %   the mid point of any un-shared triEdges to the nearest boundary.
+    %   the mid point of any *un-shared* triEdges to the nearest boundary.
     % * Optimize the new potential cuts through un-shared triEdges.
     % * Create a temporary cut from the center of the triangle to the mid
-    %   point of shared triEdges.
+    %   point of *shared* triEdges.
     % * Optimize the center of the triangle - do not consider the dot
     %   product between the temporary cut and the shared edge normal.
 
@@ -449,7 +449,7 @@ SEARCH_RADIUS = options.Search_Radius;
 
 
 % Put limits on the curvature;
-WIGNER_SEITZ_RADIUS = options.Wigner_Seitz_Radius;
+WIGNER_SEITZ_RADIUS = 5;%options.Wigner_Seitz_Radius;
 maxK = 1/WIGNER_SEITZ_RADIUS;
 % K(K>maxK) = maxK;
 K(K<-maxK) = -maxK;

@@ -268,7 +268,7 @@ else
 end
 
 % Create the triangle groups
-triangleGroups = constrainedObjectCenterTriangulation(B,N,current_centers,options);
+triangleGroups = constrainedObjectCenterTriangulation(B,current_centers,options);
 
 % Get cut association before optimization
 [~,vrtA] = computeCutAdjacency(cutIndices,B,5);

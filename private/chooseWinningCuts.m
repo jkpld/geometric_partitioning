@@ -39,13 +39,11 @@ function [cuts,cutNs,cutKs,isTriangleCut,Scores] = chooseWinningCuts(cuts,cutNs,
 %          cuts should be used or not (first column is triangle cut scores)
 %
 % The dot product between the cut directions and boundary normals at the
-% cut vertices, the boundary curvature at the cut vertices, the mean edge
-% intensity along the cuts, and the mean image intensity (acutally 1/image
+% cut vertices, the boundary curvature at the cut vertices, the maximum of the mean edge
+% intensity along the cuts and the mean image intensity (acutally 1/image
 % intensity) along the cuts are calculated for each group. If the triangle
-% cuts have three of these values larger than the normal cuts, then the
-% triangle cuts are used. If its a tie and the triangle cuts with two of
-% these and the normal cuts win two of these, then whichever one has the
-% higher total score will be chosen.
+% cuts have more of these values larger than the normal cuts, then the
+% triangle cuts are used.
 %
 % See also CREATEOBJECTPARTITIONS CREATETRIANGLECUTS
 
@@ -131,29 +129,32 @@ for i = 1:numel(triCuts)
     O = mean(S(cat(1,cutPix{:})));
     IO = mean(I(cat(1,cutPix{:})));
     % Normalized old and new scores (by type) by their mean
-    scores = [triO, O;
-              triIO, IO;
+%     scores = [triO, O;
+%               triIO, IO;
+%               triA, A; 
+%               triK, K];
+    scores = [max(triO,triIO), max(O,IO); % modify 30-06-2017 to use max of intensity score
               triA, A; 
               triK, K];
     scores = round( scores ./ mean(scores,2), 3);
     Scores{i} = scores;
 %     scores = round(scores,3)
 %     score = sum(scores,1)
-    numTriWinners = sum(scores(:,1) > scores(:,2));
+    numTriWinners = sum(scores(:,1) >= scores(:,2));
     
-    if numTriWinners >= 3
+    if numTriWinners > 1
         cutsToRemove(cutsToConsider) = true;
         winningCuts{i} = triCuts{i};
         winningCutNs{i} = triCutNs{i};
         winningCutKs{i} = triCutKs{i};
-    elseif numTriWinners == 2
-        score = sum(scores,1);
-        if score(1) > score(2)
-            cutsToRemove(cutsToConsider) = true;
-            winningCuts{i} = triCuts{i};
-            winningCutNs{i} = triCutNs{i};
-            winningCutKs{i} = triCutKs{i};
-        end
+%     elseif numTriWinners == 2
+%         score = sum(scores,1);
+%         if score(1) > score(2)
+%             cutsToRemove(cutsToConsider) = true;
+%             winningCuts{i} = triCuts{i};
+%             winningCutNs{i} = triCutNs{i};
+%             winningCutKs{i} = triCutKs{i};
+%         end
     end
     
 end

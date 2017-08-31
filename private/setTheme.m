@@ -1,8 +1,21 @@
-function goDark(fig)
+function setTheme(fig,darkLight)
+
+switch darkLight
+    case 'dark'
+        f = @(x) x;
+        axisBackground = 0.2*[1 1 1];
+    case 'light'
+        f = @(x) 1-x;
+        axisBackground = [1 1 1];
+    otherwise
+        error('figureTheme:unknownThemeName','Unknown theme name.')
+end
+
+
 
 try
     if strcmp(fig.Type,'figure')
-        fig.Color = [0 0 0];
+        fig.Color = f(0)*[1 1 1];
     end
 catch
 end
@@ -29,12 +42,12 @@ for i = 1:length(childs)
     try
         switch h.Style
             case 'text'
-                h.ForegroundColor = [0.6 0.6 0.6];
-                h.BackgroundColor = [0 0 0];
+                h.ForegroundColor = f(0.6)*[1 1 1];
+                h.BackgroundColor = f(0)*[1 1 1];
             case 'textbox'
-                h.Color = 0.6*[1 1 1];
+                h.Color = f(0.6)*[1 1 1];
             case {'radiobutton','checkbox'}
-                h.BackgroundColor = 0.1*[1 1 1];
+                h.BackgroundColor = f(0.1)*[1 1 1];
         end
     catch 
     end
@@ -42,17 +55,17 @@ for i = 1:length(childs)
     try
         switch h.Type
             case 'text'
-                h.Color = [0.6 0.6 0.6];
+                h.Color = f(0.6)*[1 1 1];
             case {'TextBox', 'textboxshape'}
-                h.Color = [0.6 0.6 0.6];
+                h.Color = f(0.6)*[1 1 1];
             case 'axes'
                 try
-                    h.Backdrop.FaceColor = [0.2 0.2 0.2];
-                    h.GridColor = [0.5 0.5 0.5];
-                    h.YColor = [0.6 0.6 0.6];
-                    h.XColor = [0.6 0.6 0.6];
-                    h.ZColor = [0.6 0.6 0.6];
-                    h.Title.Color = [0.9 0.9 0.9];
+                    h.Backdrop.FaceColor = axisBackground;
+                    h.GridColor = f(0.5)*[1 1 1];
+                    h.YColor = f(0.6)*[1 1 1];
+                    h.XColor = f(0.6)*[1 1 1];
+                    h.ZColor = f(0.6)*[1 1 1];
+                    h.Title.Color = f(0.9)*[1 1 1];
                     h.Box = 'off';
                     try
                         h.XRuler.TickDir = 'out';
@@ -66,9 +79,10 @@ for i = 1:length(childs)
                     h.ZGrid = 'on';
                 catch
                 end
+                
             case 'colorbar'
                 
-                h.Ruler.Color = [0.6 0.6 0.6];
+                h.Ruler.Color = f(0.6)*[1 1 1];
                 h.BoxHandle.Visible = 'off';
                 h.TickLength = 0.01;
                 try
@@ -79,17 +93,12 @@ for i = 1:length(childs)
                 h.Ruler.Axle.Visible = 'off';
                 
             case {'uiflowcontainer','uicontainer','uigridcontainer'}
-                h.BackgroundColor = 0.1*[1 1 1];
+                h.BackgroundColor = f(0.1)*[1 1 1];
             case 'legend'
                 
-                set(h.ItemText,'Color',[0.8 0.8 0.8]);
-                h.TextColor = [0.8 0.8 0.8];
-                h.Color = [0 0 0];
-                
-                if strcmp(fig.Tag,'SpectraPlot')
-                    set(findall(fig,'Type','Patch'),'FaceAlpha',0.6);
-                    set(findall(h.ItemTokens,'Type','Patch'),'FaceAlpha',0.6);
-                end
+                set(h.ItemText,'Color',f(0.8)*[1 1 1]);
+                h.TextColor = f(0.8)*[1 1 1];
+                h.Color = f(0)*[1 1 1];
                     
         end
     catch ME

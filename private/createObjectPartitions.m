@@ -212,7 +212,7 @@ while 1
     binEdges = [iEinds(1)-0.5; ...
                 iEinds(1:end-1) + diff(iEinds)/2; ...
                 iEinds(end)+0.5];
-    [nI,bin] = DN_histcountsmex(iE(:,1),binEdges);
+    [nI,bin] = geoPart_histcountsmex(iE(:,1),binEdges);
     totalScore = accumarray(bin,Score,size(iEinds),@mean,0);
 
     % We know need to remove edges until there are no intersections left.
@@ -234,7 +234,7 @@ while 1
         
         iE(any(iE==mostIntersections,2),:) = [];
         Score = scores(iE(:,1))./scores(iE(:,2));
-        [nI,bin] = DN_histcountsmex(iE(:,1),binEdges);
+        [nI,bin] = geoPart_histcountsmex(iE(:,1),binEdges);
 
         totalScore = accumarray(bin,Score,size(iEinds),@mean,inf);
         
@@ -377,7 +377,7 @@ end
 %     edgesToRemove(counter2) = mostIntersections;
 % 
 %     iE(any(iE==mostIntersections,2),:) = [];
-%     nI = DN_histcountsmex(iE(:,1),binEdges);
+%     nI = geoPart_histcountsmex(iE(:,1),binEdges);
 % 
 %     counter2 = counter2 + 1;
 % end
@@ -400,7 +400,7 @@ end
 %     edgesToRemove(counter2) = intrsctnInds(maxInd);
 % 
 %     intersectingEdges(any(intersectingEdges==intrsctnInds(maxInd),2),:) = [];
-%     numIntersections = DN_histcountsmex(intersectingEdges(:,1),binEdges);
+%     numIntersections = geoPart_histcountsmex(intersectingEdges(:,1),binEdges);
 %     haveIntersections = numIntersections>1;
 % 
 %     counter2 = counter2 + 1;

@@ -1,6 +1,6 @@
-function triangleGroups = constrainedObjectCenterTriangulation(B,N,centers,options)
+function triangleGroups = constrainedObjectCenterTriangulation(B,centers,options)
 % CONSTRAINEDOBJECTCENTERTRIANGULATION  Compute constrained triangulation
-% on object centers and return groups of edge connected triangles in cell
+% on object centers and return groups of edge-connected triangles in cell
 % array.
 %
 % triangleGroups = constrainedObjectCenterTriangulation(B,centers)
