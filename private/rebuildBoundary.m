@@ -152,54 +152,69 @@ for i = 1:numel(groups)+1
     r = ends(currentGroup,:) - starts; % Lx2 : L = size(starts,1)
     d = sqrt(sum(r.^2,2)); % Lx1
     
-    r = r./d; % Lx2
+    [minD, minDidx] = min(d);
     
-    % Get the dot products between each normal vector and the cut
-    % vector.
-
-    a1 = sum(r.*ds,2); % Lx1
-    a2 = sum(-r .* de(currentGroup,:),2); % Lx1
-    
-    % Maximize the value of the dot product divided by the distance.
-    
-    valueToOptimize = (a1+a2)./d; % Lx1 : I want to maximise the numerator and minimize the denominator
-    [sortedValues,ordD] = sort(valueToOptimize,'descend');
-    
-    % It can happen if the start and end point are the same value that the
-    % first sorted value is nan. In this case take the second best.
-    if isnan(sortedValues(1))
-        winner = ordD(2);
+    if (minD <= sqrt(2)) && (minDidx ~= currentGroup)
+        % If there is another group that starts 1 pixel away from the
+        % current group, then use that group as the next group. This can
+        % happen when a group is split by the start/end of the contour and
+        % there is a hole in the boundary.
+%         fprintf('There is a directly adjacent group!!\n')
+%         fprintf('Group %d is adjacent to group %d.\n', currentGroup, minDidx)
+        
+        newOrder(i+1) = minDidx;
+        currentGroup = minDidx;
     else
-        winner = ordD(1);
+
+        r = r./d; % Lx2
+
+        % Get the dot products between each normal vector and the cut
+        % vector.
+
+        a1 = sum(r.*ds,2); % Lx1
+        a2 = sum(-r .* de(currentGroup,:),2); % Lx1
+
+        % Maximize the value of the dot product divided by the distance.
+
+        valueToOptimize = (a1+a2)./d; % Lx1 : I want to maximise the numerator and minimize the denominator
+        [sortedValues,ordD] = sort(valueToOptimize,'descend');
+
+        % It can happen if the start and end point are the same value that the
+        % first sorted value is nan. In this case take the second best.
+        if isnan(sortedValues(1))
+            winner = ordD(2);
+        else
+            winner = ordD(1);
+        end
+
+        % Compare the unit vector from the current end to the winning start
+        % with all other unit vectors from the end to the other starts. If
+        % there is another start such that the dot product between the winning
+        % start and the other start is larger than some threshold
+        % SAME_DIRECTION_THRESHOLD and that other start is closer to the
+        % current end point, then choose the other start. See bug-report image
+        % rebuildBoundary_bugFix_20161021_1637 for an example of the problem
+        % this code fixes.
+
+        uvWin = r(winner,:);
+        possibleWinners = find((d < d(winner)) & (sum(uvWin .* r,2) > SAME_DIRECTION_THRESHOLD));
+
+        if ~isempty(possibleWinners)
+            [~,newwinner] = min(d(possibleWinners));
+            winner = possibleWinners(newwinner);
+        end
+
+
+        % If the start of the current group is closer than the start of any
+        % other group, then take the next closest group.
+    %     if winner == currentGroup
+    %         winner = ordD(2);
+    %     end
+
+        % Place the winning group as the next group in the boundary.
+        newOrder(i+1) = winner;
+        currentGroup = winner;
     end
-    
-    % Compare the unit vector from the current end to the winning start
-    % with all other unit vectors from the end to the other starts. If
-    % there is another start such that the dot product between the winning
-    % start and the other start is larger than some threshold
-    % SAME_DIRECTION_THRESHOLD and that other start is closer to the
-    % current end point, then choose the other start. See bug-report image
-    % rebuildBoundary_bugFix_20161021_1637 for an example of the problem
-    % this code fixes.
-    
-    uvWin = r(winner,:);
-    possibleWinners = find((d < d(winner)) & (sum(uvWin .* r,2) > SAME_DIRECTION_THRESHOLD));
-    
-    if ~isempty(possibleWinners)
-        [~,newwinner] = min(d(possibleWinners));
-        winner = possibleWinners(newwinner);
-    end
-    
-    
-    % If the start of the current group is closer than the start of any
-    % other group, then take the next closest group.
-%     if winner == currentGroup
-%         winner = ordD(2);
-%     end
-    
-    % Place the winning group as the next group in the boundary.
-    newOrder(i+1) = winner;
-    currentGroup = winner;
 end
 % Save the newOrder.
 if debug
