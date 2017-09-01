@@ -42,6 +42,10 @@ end
 
 if isempty(objCuts)
     return;
+else
+    % remove cuts that have a large negative curvature
+%     cutKs = K(cutIndices)
+%     toRemove = (min(cutKs,[],2) < -1/options.Max_Radius)
 end
 
 % Create the triangle groups
@@ -116,11 +120,13 @@ if ~isempty(objCuts) && any(~isTriCut)
 %     tmpK(isnan(tmpK)) = inf;
 %     toRemove = ~all(tmpK < 1/options.Max_Radius,2);
 %     toRemove = (mean(objCutKs,2) < 1/(2*options.Max_Radius)) & ~isTriCut; % maybe use max instead of mean.
-    toRemove = (max(objCutKs,[],2) < 1/(options.Max_Radius)) & ~isTriCut; % maybe use max instead of mean.
+% objCutKs
+% 1/options.Max_Radius
+    toRemove = ((max(objCutKs,[],2) < 1/options.Max_Radius) | (min(objCutKs,[],2) < -1/(options.Max_Radius))) & ~isTriCut; % maybe use max instead of mean.
 %     toRemove = any(objCutKs < 1/(2*options.Max_Radius),2) & ~isTriCut;
     objCuts(toRemove,:) = [];
 end
-
+% objCuts
 % Done!
 
 % Offset the cuts by the topLeftB
