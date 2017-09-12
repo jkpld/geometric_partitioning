@@ -32,6 +32,9 @@ classdef partitionOptions
 % Minimum_Hole_Size - The minimum hole size allowed in the mask.
 %   [0, Inf) , [pixels^2]
 %
+% Minimum_Object_Size - The minimum object size allowed in the mask.
+%   [0, Inf) , [pixels^2]
+%
 % Use_GPU - Determines if a GPU will be used to speed up calculation.
 %   logical
 %
@@ -61,6 +64,7 @@ classdef partitionOptions
         
         % 2D mask clean up
         Minimum_Hole_Size            = 50;
+        Minimum_Object_Size          = 150;
         
 %         Curvature_Smoothing_Size     = 2;
         
@@ -175,6 +179,11 @@ classdef partitionOptions
         function obj = set.Minimum_Hole_Size(obj,value)
             validateattributes(value,{'double'},{'scalar','nonnegative','real','finite'})
             obj.Minimum_Hole_Size = value;
+        end
+        
+        function obj = set.Minimum_Object_Size(obj,value)
+            validateattributes(value,{'double'},{'scalar','nonnegative','real','finite'})
+            obj.Minimum_Object_Size = value;
         end
     end
 end
