@@ -115,7 +115,13 @@ validPoints = validDist & validAngle; % Nx1xM
 validPointsInd = find(validPoints(:)); % (<=N*M)x1
 
 if (numel(validPointsInd) < 0.5*N)
-    error('createObjectPartitions:tooFewValidPoints','The number of valid points is less than half the number of boundary vertices. Try increasing Max_Radius and/or decreasing Min_Angle.')
+    warning('createObjectPartitions:tooFewValidPoints','The number of valid points is less than half the number of boundary vertices. Try increasing Max_Radius and/or decreasing Min_Angle.')
+%     error('createObjectPartitions:tooFewValidPoints','The number of valid points is less than half the number of boundary vertices. Try increasing Max_Radius and/or decreasing Min_Angle.')
+    cuts = [];
+    ncuts = [];
+    cutCntrs = [];
+    cutIndices = [];
+    return;
 end
 
 lineSegments = nan(3*numel(validPointsInd),2);
