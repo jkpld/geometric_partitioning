@@ -24,9 +24,9 @@ end
 
 if have_compiler
     try
-        if ~exist(fullfile(path,'private',['nakeinterp1.' mexext]),'file')
+%         if ~exist(fullfile(path,'private',['nakeinterp1.' mexext]),'file')
             mex(fullfile(path,'private','nakeinterp1.c'),'-outdir',fullfile(path,'private'),'-silent')
-        end
+%         end
         fprintf('...Compiled nakeinterp1.c\n')
     catch % ME
     %     rethrow(ME)
@@ -38,7 +38,7 @@ end
 folder = fullfile(path,'private');
 d = dir(folder);
 names = {d.name};
-if ~any(strncmp('geoPart_histcountsmex',names,16))
+% if ~any(strncmp('geoPart_histcountsmex',names,16))
     folder = fullfile(matlabroot,'toolbox','matlab','datafun','private');
     d = dir(folder);
     names = {d.name};
@@ -49,7 +49,7 @@ if ~any(strncmp('geoPart_histcountsmex',names,16))
     end
 
     copyfile(fullfile(folder,names{nameIdx}),fullfile(path,'private',['geoPart_' names{nameIdx}]))
-end
+% end
 fprintf('...added histcountsmex\n')
 
 % Copy pdistmex into the private folder --------------------------------
