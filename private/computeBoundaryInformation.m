@@ -128,6 +128,9 @@ for i = 1:numObjs
 
         for j = 1:numChildren
 
+            if size(tmpB{children(j)},1)<10
+                continue
+            end
             child{j} = tmpB{children(j)};
             if isPolyCW(child{j})
                 child{j} = flip(child{j});
@@ -255,3 +258,9 @@ else
 end
 
 end
+
+%-%
+%-% For God so loved the world that he gave his one and only Son, that
+%-% whoever believes in him shall not perish but have eternal life. (John
+%-% 3:16)
+%-%

@@ -291,6 +291,7 @@ nanLocs = [0;find(isnan(B(:,1)));size(B,1)+1];
 for i = 1:numel(nanLocs)-1
     % Get the current contour
     regionInds = nanLocs(i)+1:nanLocs(i+1)-1;
+    
     tmpInvalidPoints = invalidPoints(regionInds);
     tmpSelectedCenter = selectedCenter(regionInds);
     tmpM = numel(regionInds);
