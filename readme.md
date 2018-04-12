@@ -47,3 +47,6 @@ partOptions.Use_GPU = 1;
 [BW_partitioned, cuts, Info] = partition_objects(I, BW, r0, partOptions);
 plot_partition_results(BW_partitioned, r0, [700, 1970; 1450, 2670])
 ```
+
+<img width="300" src="docs/before_part.PNG">
+<img width="300" src="docs/after_part.PNG">
