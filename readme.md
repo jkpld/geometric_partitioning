@@ -1,8 +1,11 @@
 # Geometric partitioning
 A geometric method of partitioning partially overlapping nuclei (or other convex objects) using seed-points.
 
-The figure below gives a graphical overview of the method. Each boundary vertex is assigned to the best seed-point. Additionally, triangle graphs are searched for and used to create another possible set of cuts. The cuts with the highest score (largest overlap with image edges or edge normals that line up) are used. Cuts are the optimized over a small region.
+The figure below gives a graphical overview of the method. Each boundary vertex is assigned to the best seed-point. Additionally, triangle graphs are searched for and used to create another possible set of cuts. The cuts with the highest score (largest overlap with image edges or edge normals that line up) are used. Cuts are the optimized over a small region. The details of this method are described in _**[here]()**_.
+
+
 ![Method](/docs/method.png)
+
 
 ## Installation
 
