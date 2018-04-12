@@ -48,5 +48,4 @@ partOptions.Use_GPU = 1;
 plot_partition_results(BW_partitioned, r0, [700, 1970; 1450, 2670])
 ```
 
-<img width="300" src="docs/before_part.PNG">
-<img width="300" src="docs/after_part.PNG">
+<img width="300" src="docs/before_part.PNG"><img width="300" src="docs/after_part.PNG">
