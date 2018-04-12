@@ -91,6 +91,7 @@ function [x0,y0,iout,jout] = intersections(x1,y1,x2,y2,self_intersect,robust,use
 % typical application, this technique will eliminate most of the potential
 % line segment pairs.
 
+% Modified by James Kapaldo for GPU usage
 
 % Input checks.
 narginchk(2,7)
@@ -212,7 +213,7 @@ B = -[x1(i) x2(j) y1(i) y2(j)].';
 
 
 if robust
-    
+
     if useGPU
         isMatrixSingular = rcondGPU(AA) < eps;
         isMatrixSingular = permute(isMatrixSingular,[1,3,2]);
@@ -257,7 +258,7 @@ if robust
             rethrow(err)
         end
     end
-    
+
     % Find where t1 and t2 are between 0 and 1 and return the corresponding
     % x0 and y0 values.
     in_range = (T(1,:) >= 0 & T(2,:) >= 0 & T(1,:) <= 1 & T(2,:) <= 1).';
@@ -276,12 +277,12 @@ if robust
         selected = in_range;
     end
     xy0 = T(3:4,selected).';
-    
+
     % Remove duplicate intersection points.
     [xy0,index] = unique(xy0,'rows');
     x0 = xy0(:,1);
     y0 = xy0(:,2);
-    
+
     % Compute how far along each line segment the intersections are.
     if nargout > 2
         sel_index = find(selected);
@@ -304,12 +305,12 @@ else % non-robust option
             rethrow(ME)
         end
     else
-        
+
         for k = 1:n
             [L,U] = lu(AA(:,:,k));
             T(:,k) = U\(L\B(:,k));
         end
-        
+
     end
     warning('on','MATLAB:singularMatrix');
     % Find where t1 and t2 are between 0 and 1 and return the corresponding
@@ -317,7 +318,7 @@ else % non-robust option
     in_range = (T(1,:) >= 0 & T(2,:) >= 0 & T(1,:) < 1 & T(2,:) < 1).';
     x0 = T(3,in_range).';
     y0 = T(4,in_range).';
-    
+
     % Compute how far along each line segment the intersections are.
     if nargout > 2
         iout = i(in_range) + T(1,in_range).';
@@ -342,19 +343,19 @@ try
     % the 1-norm definition (which is used in rcond()), and then we will
     % take the reciprocal. This should be approximately equal to the
     % results returned by rcond().
-    
+
     % Set matrix to GPU
     A_d = gpuArray(A);
-    
+
     % Compute the inverse
     iA_d = pagefun(@inv,A_d);
-    
+
     % Compute the 1-norms of the matrix and the inverse matrix
     A_d = abs(A_d);
     iA_d = abs(iA_d);
     nA_d = max(sum(A_d));
     niA_d = max(sum(iA_d));
-    
+
     % Compute the reciprocal condition number
     condition_d = nA_d .* niA_d;
     rcondition = gather(1./condition_d);
@@ -365,10 +366,10 @@ catch ME
     rethrow(ME)
 end
 
-end 
- 
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Original function 
+% Original function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % function [x0,y0,iout,jout] = intersections(x1,y1,x2,y2,robust)
@@ -408,13 +409,13 @@ end
 % %   [X0,Y0] = intersections(X1,Y1,ROBUST);
 % %
 % % where, as before, ROBUST is optional.
-% 
+%
 % % Version: 1.12, 27 January 2010
 % % Author:  Douglas M. Schwarz
 % % Email:   dmschwarz=ieee*org, dmschwarz=urgrad*rochester*edu
 % % Real_email = regexprep(Email,{'=','*'},{'@','.'})
-% 
-% 
+%
+%
 % % Theory of operation:
 % %
 % % Given two line segments, L1 and L2,
@@ -458,12 +459,12 @@ end
 % % cross, but if they don't then the line segments cannot cross.  In a
 % % typical application, this technique will eliminate most of the potential
 % % line segment pairs.
-% 
-% 
+%
+%
 % % Input checks.
 % narginchk(2,5)
 % % error(nargchk(2,5,nargin))
-% 
+%
 % % Adjustments when fewer than five arguments are supplied.
 % switch nargin
 %     case 2
@@ -482,7 +483,7 @@ end
 %     case 5
 %         self_intersect = false;
 % end
-% 
+%
 % % x1 and y1 must be vectors with same number of points (at least 2).
 % if sum(size(x1) > 1) ~= 1 || sum(size(y1) > 1) ~= 1 || ...
 %         length(x1) ~= length(y1)
@@ -493,14 +494,14 @@ end
 %         length(x2) ~= length(y2)
 %     error('X2 and Y2 must be equal-length vectors of at least 2 points.')
 % end
-% 
-% 
+%
+%
 % % Force all inputs to be column vectors.
 % x1 = x1(:);
 % y1 = y1(:);
 % x2 = x2(:);
 % y2 = y2(:);
-% 
+%
 % % Compute number of line segments in each curve and some differences we'll
 % % need later.
 % n1 = length(x1) - 1;
@@ -509,7 +510,7 @@ end
 % xy2 = [x2 y2];
 % dxy1 = diff(xy1);
 % dxy2 = diff(xy2);
-% 
+%
 % % Determine the combinations of i and j where the rectangle enclosing the
 % % i'th line segment of curve 1 overlaps with the rectangle enclosing the
 % % j'th line segment of curve 2.
@@ -521,12 +522,12 @@ end
 %     repmat(max(y2(1:end-1),y2(2:end)).',n1,1) & ...
 %     repmat(max(y1(1:end-1),y1(2:end)),1,n2) >= ...
 %     repmat(min(y2(1:end-1),y2(2:end)).',n1,1));
-% 
+%
 % % Force i and j to be column vectors, even when their length is zero, i.e.,
 % % we want them to be 0-by-1 instead of 0-by-0.
 % i = reshape(i,[],1);
 % j = reshape(j,[],1);
-% 
+%
 % % Find segments pairs which have at least one vertex = NaN and remove them.
 % % This line is a fast way of finding such segment pairs.  We take
 % % advantage of the fact that NaNs propagate through calculations, in
@@ -541,7 +542,7 @@ end
 % end
 % i(remove) = [];
 % j(remove) = [];
-% 
+%
 % % Initialize matrices.  We'll put the T's and B's in matrices and use them
 % % one column at a time.  AA is a 3-D extension of A where we'll use one
 % % plane at a time.
@@ -552,10 +553,10 @@ end
 % AA([3 4],4,:) = -1;
 % AA([1 3],1,:) = dxy1(i,:).';
 % AA([2 4],2,:) = dxy2(j,:).';
-% 
+%
 % B = -[x1(i) x2(j) y1(i) y2(j)].';
-% 
-% 
+%
+%
 % % Loop through possibilities.  Trap singularity warning and then use
 % % lastwarn to see if that plane of AA is near singular.  Process any such
 % % segment pairs to determine if they are colinear (overlap) or merely
@@ -566,13 +567,13 @@ end
 % %   (x1(2),y1(2)) - (x1(1),y1(1)) x (x2(2),y2(2)) - (x1(1),y1(1)).
 % %
 % % If this is close to zero then the segments overlap.
-% 
+%
 % % If the robust option is false then we assume no two segment pairs are
 % % parallel and just go ahead and do the computation.  If A is ever singular
 % % a warning will appear.  This is faster and obviously you should use it
 % % only when you know you will never have overlapping or parallel segment
 % % pairs.
-% 
+%
 % if robust
 %     overlap = false(n,1);
 %     warning_state = warning('off','MATLAB:singularMatrix');
@@ -595,10 +596,10 @@ end
 %         warning(warning_state)
 %         rethrow(err)
 %     end
-% 
+%
 %     % Find where t1 and t2 are between 0 and 1 and return the corresponding
 %     % x0 and y0 values.
-% 
+%
 %     in_range = (T(1,:) >= 0 & T(2,:) >= 0 & T(1,:) <= 1 & T(2,:) <= 1).';
 %     % For overlapping segment pairs the algorithm will return an
 %     % intersection point that is at the center of the overlapping region.
@@ -615,12 +616,12 @@ end
 %         selected = in_range;
 %     end
 %     xy0 = T(3:4,selected).';
-%     
+%
 %     % Remove duplicate intersection points.
 %     [xy0,index] = unique(xy0,'rows');
 %     x0 = xy0(:,1);
 %     y0 = xy0(:,2);
-%     
+%
 %     % Compute how far along each line segment the intersections are.
 %     if nargout > 2
 %         sel_index = find(selected);
@@ -629,24 +630,24 @@ end
 %         jout = j(sel) + T(2,sel).';
 %     end
 % else % non-robust option
-% 
+%
 %     for k = 1:n
 %         [L,U] = lu(AA(:,:,k));
 %         T(:,k) = U\(L\B(:,k));
 %     end
-% 
+%
 %     % Find where t1 and t2 are between 0 and 1 and return the corresponding
 %     % x0 and y0 values.
 %     in_range = (T(1,:) >= 0 & T(2,:) >= 0 & T(1,:) < 1 & T(2,:) < 1).';
 %     x0 = T(3,in_range).';
 %     y0 = T(4,in_range).';
-%     
+%
 %     % Compute how far along each line segment the intersections are.
 %     if nargout > 2
 %         iout = i(in_range) + T(1,in_range).';
 %         jout = j(in_range) + T(2,in_range).';
 %     end
 % end
-% 
+%
 % % Plot the results (useful for debugging).
 % % plot(x1,y1,x2,y2,x0,y0,'ok');
